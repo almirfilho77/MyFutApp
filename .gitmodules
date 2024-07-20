@@ -1,0 +1,3 @@
+[submodule "CatolYeah"]
+	path = CatolYeah
+	url = git@github.com:almirfilho77/CatolYeah.git
