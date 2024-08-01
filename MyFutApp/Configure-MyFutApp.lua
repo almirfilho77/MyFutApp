@@ -19,7 +19,8 @@ project "MyFutApp"
     {
         "%{IncludeDir.CatolYeah}/src",
         "%{IncludeDir.CatolYeah}/vendor/spdlog/include",
-        "%{IncludeDir.CatolYeah}/vendor/glm/"
+        "%{IncludeDir.CatolYeah}/vendor/glm/",
+        "%{IncludeDir.CatolYeah}/vendor/imgui"
     }
 
     links
