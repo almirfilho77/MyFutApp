@@ -18,30 +18,115 @@ public:
 	{
 		static bool show = true;
 
-		CatolYeah::RenderCommand::Clear();
+		//CatolYeah::RenderCommand::Clear();
 
 		ImGui::ShowDemoWindow(&show);
 
-		ImGui::Begin("GPU Info");
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-			1000.0f / ImGui::GetIO().Framerate,
-			ImGui::GetIO().Framerate);
+		ImGui::Begin("GPU Info", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
+		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 		ImGui::End();
 	}
+};
+
+class BackgroundLayer : public CatolYeah::Layer
+{
+public:
+	BackgroundLayer(const std::string& bgImagePath)
+		: Layer("BackgroundLayer"), m_backgroundImagePath(bgImagePath)
+	{
+		CY_ASSERT(!bgImagePath.empty(), "Empty background image!!");
+		m_squarePosition = { 0.0f, 0.0f, 0.0f };
+	}
+
+	void OnAttach() override
+	{
+		m_backgroundImage = CatolYeah::Texture2D::Create(m_backgroundImagePath);
+	}
+	
+	void OnUpdate(CatolYeah::Timestep ts)
+	{
+
+		// Square translation
+		if (CatolYeah::Input::IsKeyPressed(CY_KEY_L))
+			m_squarePosition.x += 5.0f * ts;
+		else if (CatolYeah::Input::IsKeyPressed(CY_KEY_J))
+			m_squarePosition.x -= 5.0f * ts;
+
+		if (CatolYeah::Input::IsKeyPressed(CY_KEY_I))
+			m_squarePosition.y += 5.0f * ts;
+		else if (CatolYeah::Input::IsKeyPressed(CY_KEY_K))
+			m_squarePosition.y -= 5.0f * ts;
+
+		// Render commands
+		CatolYeah::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+		CatolYeah::RenderCommand::Clear();
+
+		CatolYeah::Renderer2D::BeginScene();
+
+		//CY_INFO("Square position [x:{0}] [y:{1}", m_squarePosition.x, m_squarePosition.y);
+		CatolYeah::Renderer2D::DrawQuad({ m_squarePosition.x, m_squarePosition.y, 0.2f }, { 1.0f, 1.0f }, m_backgroundImage);				// Texture closes to the screen than flat color quad
+		CatolYeah::Renderer2D::EndScene();
+	}
+
+	void OnEvent(CatolYeah::Event& e)
+	{
+		CatolYeah::EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<CatolYeah::MouseButtonPressedEvent>(CY_BIND_EVENT_FN(BackgroundLayer::m_MouseEventHandler));
+	}
+
+private:
+	bool m_MouseEventHandler(CatolYeah::MouseButtonPressedEvent& e)
+	{
+		CY_DEBUG("Mouse click pos: {0}x{1}", ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+		return EVENT_RETURN_PASS_ON;
+	}
+
+private:	
+	std::string m_backgroundImagePath;
+	CatolYeah::Ref<CatolYeah::Texture2D> m_backgroundImage;
+
+	glm::vec3 m_squarePosition = { 0.0f, 0.0f, 0.0f };
 };
 
 class DrawingLayer : public CatolYeah::Layer
 {
 public:
-	DrawingLayer() {}
+	uint32_t width, height;
+
+private:
+	bool m_OnWindowResize(CatolYeah::WindowResizeEvent& windowResizeEvent)
+	{
+		width = windowResizeEvent.GetWindowWidth();
+		height = windowResizeEvent.GetWindowHeight();
+		return EVENT_RETURN_PASS_ON;
+	}
+
+public:
+	DrawingLayer(const std::string &pitchImagePath)
+		:	m_pitchImagePath(pitchImagePath)
+	{
+		width = CatolYeah::Application::Get().GetWindow().GetWidth();
+		height = CatolYeah::Application::Get().GetWindow().GetHeight();
+	}
+
+	void OnAttach() override
+	{
+		m_pitchImage = CatolYeah::Texture2D::Create(m_pitchImagePath);
+	}
+
+	virtual void OnEvent(CatolYeah::Event& event) override
+	{
+		CatolYeah::EventDispatcher dispatcher(event);
+		dispatcher.Dispatch<CatolYeah::WindowResizeEvent>(CY_BIND_EVENT_FN(DrawingLayer::m_OnWindowResize));
+	}
 
 	void OnImGuiRender() override
 	{
 		static bool p_open = true;
 
-		CatolYeah::RenderCommand::Clear();
+		//CatolYeah::RenderCommand::Clear();
 
-		ImGui::Begin("Open/Close Canvas", 0, ImGuiWindowFlags_NoDecoration);
+		/*ImGui::Begin("Open/Close Canvas", 0, ImGuiWindowFlags_NoDecoration);
 		static std::string buttonLabel = CLOSE_CANVAS_BUTTON_LABEL;
 		if (ImGui::Button(buttonLabel.c_str()))
 		{
@@ -49,73 +134,38 @@ public:
 			if (p_open) buttonLabel = CLOSE_CANVAS_BUTTON_LABEL;
 			else		buttonLabel = OPEN_CANVAS_BUTTON_LABEL;
 		}
-		ImGui::End();
+		ImGui::End();*/
+
+		auto winPos = ImGui::GetWindowPos();
+		//CY_DEBUG("Window size: {0}x{1}", width, height);
+		//CY_DEBUG("Window pos: {0}x{1}", winPos.x, winPos.y);
+
+		auto imageWidth = static_cast<uint32_t>(m_pitchImage->GetWidth() * 0.4f);
+		auto imageHeight = static_cast<uint32_t>(m_pitchImage->GetHeight() * 0.4f);
+		//CY_DEBUG("Image size: {0}x{1}", imageWidth, imageHeight);
+
+		ImVec2 pmin = ImVec2(static_cast<uint32_t>(0.5f * (width - imageWidth)) + winPos.x, height - imageHeight - 100 + winPos.y);
+		ImVec2 pmax = ImVec2(pmin.x + imageWidth, pmin.y + imageHeight);
+		//CY_DEBUG("pmin: {0}x{1} / pmax: {2}x{3}", pmin.x, pmin.y, pmax.x, pmax.y);
+
+		ImGui::SetNextWindowPos(pmin);
 
 		if (p_open == true)
 		{
-			if (ImGui::Begin("Drawing area", &p_open, ImGuiWindowFlags_NoCollapse))
+			if (ImGui::Begin("Little pitch", &p_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground))
 			{
-				// Begin of example code to test and modify
-				static ImVector<ImVec2> points;
-				static ImVec2 scrolling(0.0f, 0.0f);
-				static bool opt_enable_grid = true;
-				static bool opt_enable_context_menu = true;
-				static bool adding_line = false;
-
-				// Using InvisibleButton() as a convenience 1) it will advance the layout cursor and 2) allows us to use IsItemHovered()/IsItemActive()
-				ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
-				ImVec2 canvas_sz = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
-				if (canvas_sz.x < 50.0f) canvas_sz.x = 50.0f;
-				if (canvas_sz.y < 50.0f) canvas_sz.y = 50.0f;
-				ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
-
-				// Draw border and background color
-				ImGuiIO& io = ImGui::GetIO();
-				ImDrawList* draw_list = ImGui::GetWindowDrawList();
-				draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(50, 50, 50, 255));
-				draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
-
-				// This will catch our interactions
-				ImGui::InvisibleButton("canvas", canvas_sz, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-				const bool is_hovered = ImGui::IsItemHovered(); // Hovered
-				const bool is_active = ImGui::IsItemActive();   // Held
-				const ImVec2 origin(canvas_p0.x + scrolling.x, canvas_p0.y + scrolling.y); // Lock scrolled origin
-				const ImVec2 mouse_pos_in_canvas(io.MousePos.x - origin.x, io.MousePos.y - origin.y);
-
-				// Add first and second point
-				if (is_hovered && !adding_line && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-				{
-					points.push_back(mouse_pos_in_canvas);
-					points.push_back(mouse_pos_in_canvas);
-					adding_line = true;
-				}
-				if (adding_line)
-				{
-					points.back() = mouse_pos_in_canvas;
-					if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
-						adding_line = false;
-				}
-
-				// Draw grid + all lines in the canvas
-				draw_list->PushClipRect(canvas_p0, canvas_p1, true);
-				if (opt_enable_grid)
-				{
-					const float GRID_STEP = 64.0f;
-					for (float x = fmodf(scrolling.x, GRID_STEP); x < canvas_sz.x; x += GRID_STEP)
-						draw_list->AddLine(ImVec2(canvas_p0.x + x, canvas_p0.y), ImVec2(canvas_p0.x + x, canvas_p1.y), IM_COL32(200, 200, 200, 40));
-					for (float y = fmodf(scrolling.y, GRID_STEP); y < canvas_sz.y; y += GRID_STEP)
-						draw_list->AddLine(ImVec2(canvas_p0.x, canvas_p0.y + y), ImVec2(canvas_p1.x, canvas_p0.y + y), IM_COL32(200, 200, 200, 40));
-				}
-				for (int n = 0; n < points.Size; n += 2)
-					draw_list->AddLine(ImVec2(origin.x + points[n].x, origin.y + points[n].y), ImVec2(origin.x + points[n + 1].x, origin.y + points[n + 1].y), IM_COL32(255, 255, 0, 255), 2.0f);
-				draw_list->PopClipRect();
-
-				// End of example code //
+				ImDrawList* drawList = ImGui::GetWindowDrawList();
+				drawList->AddImage((void*)(intptr_t)m_pitchImage->GetTextureId(),
+					ImVec2(pmin.x+5, pmin.y+5), pmax);
+				//ImGui::Image((void*)(intptr_t)m_pitchImage->GetTextureId(), ImVec2(m_pitchImage->GetWidth() * 0.4f, m_pitchImage->GetHeight() * 0.4f));
 			}
 			ImGui::End();
 		}
 
 	}
+private:
+	std::string m_pitchImagePath;
+	CatolYeah::Ref<CatolYeah::Texture2D> m_pitchImage;
 };
 
 class App : public CatolYeah::Application
@@ -126,8 +176,14 @@ public:
 	{
 		CY_DEBUG("Init App class");
 		CY_DEBUG("Assets path: {0}", assetsPath);
+		CatolYeah::RenderCommand::SetViewport(0, 0, GetWindow().GetWidth(), GetWindow().GetHeight());
 
-		PushOverlay(new DrawingLayer());
+		fs::path pitchTexturePath = fs::current_path() / "assets" / "textures" / "football_pitch_2D_base2.png";
+		fs::path texturePath = fs::current_path() / "assets" / "textures" / "football_1.png";
+		//fs::path texturePath = fs::current_path() / "assets" / "textures" / "ronaldinho.png";
+		PushLayer(new BackgroundLayer(texturePath.string()));
+
+		PushOverlay(new DrawingLayer(pitchTexturePath.string()));
 		PushOverlay(new DebugLayer());
 	}
 };
