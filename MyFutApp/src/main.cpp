@@ -94,15 +94,11 @@ private:
 class App : public CatolYeah::Application
 {
 public:
-	App(const std::string& windowTitle = "MyApp",
-		uint32_t windowWidth = 1920,
-		uint32_t windowHeight = 1080,
-		std::string_view assetsPath = "",
-		bool setVSync = true)
-		:	CatolYeah::Application(windowTitle, windowWidth, windowHeight, assetsPath)
+	App(const CatolYeah::ApplicationSpecs &appSpecs)
+		:	CatolYeah::Application(appSpecs)
 	{
 		CY_DEBUG("Init App class");
-		CY_DEBUG("Assets path: {0}", assetsPath);
+		CY_DEBUG("Assets path: {0}", appSpecs.AssetsPath);
 		CatolYeah::RenderCommand::SetViewport(0, 0, GetWindow().GetWidth(), GetWindow().GetHeight());
 
 		fs::path pitchTexturePath = fs::current_path() / "assets" / "textures" / "football_pitch_2D_base2.png";
@@ -118,5 +114,6 @@ public:
 CatolYeah::Application* CatolYeah::CreateApplication()
 {
 	fs::path assetsPath = fs::current_path() / "assets" / "shaders";
-	return new App("MyFutApp", 1280, 720, assetsPath.string());
+	CatolYeah::ApplicationSpecs appSpecs{ "MyFutApp", 1280, 720, assetsPath.string(), true };
+	return new App(appSpecs);
 }
