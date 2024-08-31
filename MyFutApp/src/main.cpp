@@ -1,8 +1,11 @@
 #include "CatolYeah.h"
 #include "CatolYeah/Core/EntryPoint.h"
+
 #include <filesystem>
 #include <iostream>
+
 #include "imgui.h"
+#include "DrawingLayer.h"
 
 namespace fs = std::filesystem;
 
@@ -88,91 +91,15 @@ private:
 	glm::vec3 m_squarePosition = { 0.0f, 0.0f, 0.0f };
 };
 
-class DrawingLayer : public CatolYeah::Layer
-{
-public:
-	uint32_t width, height;
-
-private:
-	bool m_OnWindowResize(CatolYeah::WindowResizeEvent& windowResizeEvent)
-	{
-		width = windowResizeEvent.GetWindowWidth();
-		height = windowResizeEvent.GetWindowHeight();
-		return EVENT_RETURN_PASS_ON;
-	}
-
-public:
-	DrawingLayer(const std::string &pitchImagePath)
-		:	m_pitchImagePath(pitchImagePath)
-	{
-		width = CatolYeah::Application::Get().GetWindow().GetWidth();
-		height = CatolYeah::Application::Get().GetWindow().GetHeight();
-	}
-
-	void OnAttach() override
-	{
-		m_pitchImage = CatolYeah::Texture2D::Create(m_pitchImagePath);
-	}
-
-	virtual void OnEvent(CatolYeah::Event& event) override
-	{
-		CatolYeah::EventDispatcher dispatcher(event);
-		dispatcher.Dispatch<CatolYeah::WindowResizeEvent>(CY_BIND_EVENT_FN(DrawingLayer::m_OnWindowResize));
-	}
-
-	void OnImGuiRender() override
-	{
-		static bool p_open = true;
-
-		//CatolYeah::RenderCommand::Clear();
-
-		/*ImGui::Begin("Open/Close Canvas", 0, ImGuiWindowFlags_NoDecoration);
-		static std::string buttonLabel = CLOSE_CANVAS_BUTTON_LABEL;
-		if (ImGui::Button(buttonLabel.c_str()))
-		{
-			p_open = !p_open;
-			if (p_open) buttonLabel = CLOSE_CANVAS_BUTTON_LABEL;
-			else		buttonLabel = OPEN_CANVAS_BUTTON_LABEL;
-		}
-		ImGui::End();*/
-
-		auto winPos = ImGui::GetWindowPos();
-		//CY_DEBUG("Window size: {0}x{1}", width, height);
-		//CY_DEBUG("Window pos: {0}x{1}", winPos.x, winPos.y);
-
-		auto imageWidth = static_cast<uint32_t>(m_pitchImage->GetWidth() * 0.4f);
-		auto imageHeight = static_cast<uint32_t>(m_pitchImage->GetHeight() * 0.4f);
-		//CY_DEBUG("Image size: {0}x{1}", imageWidth, imageHeight);
-
-		ImVec2 pmin = ImVec2(static_cast<uint32_t>(0.5f * (width - imageWidth)) + winPos.x, height - imageHeight - 100 + winPos.y);
-		ImVec2 pmax = ImVec2(pmin.x + imageWidth, pmin.y + imageHeight);
-		//CY_DEBUG("pmin: {0}x{1} / pmax: {2}x{3}", pmin.x, pmin.y, pmax.x, pmax.y);
-
-		ImGui::SetNextWindowPos(pmin);
-
-		if (p_open == true)
-		{
-			if (ImGui::Begin("Little pitch", &p_open, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground))
-			{
-				ImDrawList* drawList = ImGui::GetWindowDrawList();
-				drawList->AddImage((void*)(intptr_t)m_pitchImage->GetTextureId(),
-					ImVec2(pmin.x+5, pmin.y+5), pmax);
-				//ImGui::Image((void*)(intptr_t)m_pitchImage->GetTextureId(), ImVec2(m_pitchImage->GetWidth() * 0.4f, m_pitchImage->GetHeight() * 0.4f));
-			}
-			ImGui::End();
-		}
-
-	}
-private:
-	std::string m_pitchImagePath;
-	CatolYeah::Ref<CatolYeah::Texture2D> m_pitchImage;
-};
-
 class App : public CatolYeah::Application
 {
 public:
-	App(std::string_view assetsPath)
-		:	CatolYeah::Application(assetsPath)
+	App(const std::string& windowTitle = "MyApp",
+		uint32_t windowWidth = 1920,
+		uint32_t windowHeight = 1080,
+		std::string_view assetsPath = "",
+		bool setVSync = true)
+		:	CatolYeah::Application(windowTitle, windowWidth, windowHeight, assetsPath)
 	{
 		CY_DEBUG("Init App class");
 		CY_DEBUG("Assets path: {0}", assetsPath);
@@ -191,5 +118,5 @@ public:
 CatolYeah::Application* CatolYeah::CreateApplication()
 {
 	fs::path assetsPath = fs::current_path() / "assets" / "shaders";
-	return new App(assetsPath.string());
+	return new App("MyFutApp", 1280, 720, assetsPath.string());
 }
