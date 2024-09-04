@@ -20,12 +20,21 @@ project "MyFutApp"
         "%{IncludeDir.CatolYeah}/src",
         "%{IncludeDir.CatolYeah}/vendor/spdlog/include",
         "%{IncludeDir.CatolYeah}/vendor/glm/",
-        "%{IncludeDir.CatolYeah}/vendor/imgui"
+        "%{IncludeDir.CatolYeah}/vendor/imgui",
+        "%{IncludeDir.opencv}"
     }
+
+    libdirs
+    {
+        "%{wks.location}/vendor/opencv/lib"
+    }
+
+    postbuildcommands { "{COPYFILE} %[%{wks.location}/vendor/opencv/lib/opencv_world490d.dll] %[%{cfg.targetdir}/opencv_world490d.dll]" }
 
     links
     {
-        "CatolYeah"
+        "CatolYeah",
+        "opencv_world490d.lib",
     }
 
     filter "system:windows"

@@ -15,6 +15,7 @@ include "CatolYeah/Configure-CatolYeah-External.lua"
 
 -- Include dirs relative to root folder
 IncludeDir["CatolYeah"] = "%{wks.location}/CatolYeah/CatolYeah"
+IncludeDir["opencv"] = "%{wks.location}/vendor/opencv/include"
 
 group "App"
     include "MyFutApp/Configure-MyFutApp.lua"

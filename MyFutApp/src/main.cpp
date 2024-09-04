@@ -7,6 +7,8 @@
 #include "imgui.h"
 #include "DrawingLayer.h"
 
+#include "opencv2/opencv.hpp"
+
 namespace fs = std::filesystem;
 
 #define OPEN_CANVAS_BUTTON_LABEL	"Open Canvas"
@@ -43,6 +45,11 @@ public:
 
 	void OnAttach() override
 	{
+		cv::Mat img = cv::imread(m_backgroundImagePath, cv::IMREAD_COLOR);
+
+		cv::imshow("Display window", img);
+		int k = cv::waitKey(0);
+		cv::destroyWindow("Display window");
 		m_backgroundImage = CatolYeah::Texture2D::Create(m_backgroundImagePath);
 	}
 	
