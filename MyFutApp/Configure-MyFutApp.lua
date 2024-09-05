@@ -29,7 +29,11 @@ project "MyFutApp"
         "%{wks.location}/vendor/opencv/lib"
     }
 
-    postbuildcommands { "{COPYFILE} %[%{wks.location}/vendor/opencv/lib/opencv_world490d.dll] %[%{cfg.targetdir}/opencv_world490d.dll]" }
+    postbuildcommands 
+    { 
+        "{COPYFILE} %[%{wks.location}/vendor/opencv/lib/opencv_world490d.dll] %[%{cfg.targetdir}/opencv_world490d.dll]",
+        "{COPYFILE} %[%{wks.location}/vendor/ffmpeg/opencv_videoio_ffmpeg490_64.dll] %[%{cfg.targetdir}/opencv_videoio_ffmpeg490_64.dll]"
+    }
 
     links
     {
