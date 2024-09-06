@@ -7,19 +7,22 @@
 #include "imgui.h"
 #include "DrawingLayer.h"
 #include "VideoLayer.h"
+#include "DebugObject.h"
 
 #include "opencv2/opencv.hpp"
 #include "opencv2/videoio.hpp"
 
 namespace fs = std::filesystem;
 
-#define OPEN_CANVAS_BUTTON_LABEL	"Open Canvas"
-#define CLOSE_CANVAS_BUTTON_LABEL	"Close Canvas"
-
 class DebugLayer : public CatolYeah::Layer
 {
+private:
+	std::shared_ptr<DebugObject> m_debugObject;
 public:
-	DebugLayer() {}
+	DebugLayer(std::shared_ptr<DebugObject> debugObject) 
+		: m_debugObject(debugObject)
+	{
+	}
 
 	void OnImGuiRender() override
 	{
@@ -32,14 +35,24 @@ public:
 		ImGui::Begin("GPU Info", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground);
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 		ImGui::End();
+
+		if (ImGui::Begin("Debug handles", 0, 0))
+		{
+			ImGui::Checkbox("DrawCrossHair", &m_debugObject->DrawCrossHair);
+			ImGui::Checkbox("Little pitch corner points", &m_debugObject->LittlePitchPoints);
+		}
+		ImGui::End();
 	}
 };
 
 class App : public CatolYeah::Application
 {
 public:
+	std::shared_ptr<DebugObject> debugObject;
+
+public:
 	App(const CatolYeah::ApplicationSpecs &appSpecs)
-		:	CatolYeah::Application(appSpecs)
+		:	CatolYeah::Application(appSpecs), debugObject(std::make_shared<DebugObject>())
 	{
 		CY_DEBUG("Init App class");
 		CY_DEBUG("Assets path: {0}", appSpecs.AssetsPath);
@@ -51,8 +64,8 @@ public:
 		CY_DEBUG("Video path = {0}", videoPath.string());
 		PushLayer(new VideoLayer(videoPath.string()));
 
-		PushOverlay(new DrawingLayer(pitchTexturePath.string()));
-		PushOverlay(new DebugLayer());
+		PushOverlay(new DrawingLayer(pitchTexturePath.string(), debugObject));
+		PushOverlay(new DebugLayer(debugObject));
 	}
 };
 
