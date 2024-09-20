@@ -17,6 +17,12 @@ VideoLayer::VideoLayer(const std::string& videoPath)
 		//Consult cv::VideoCaptureProperties for the available properties
 		m_frameRate = m_videoCapture.get(cv::CAP_PROP_FPS);
 	}
+	auto assetsPath = std::filesystem::current_path() / "assets";
+#ifdef USE_CUDA
+	m_ObjectDetector = std::make_shared<ObjectDetector>(assetsPath.string(), true);
+#else
+	m_ObjectDetector = std::make_shared<ObjectDetector>(assetsPath.string(), false);
+#endif
 }
 
 VideoLayer::~VideoLayer()
@@ -25,6 +31,7 @@ VideoLayer::~VideoLayer()
 	{
 		m_videoCapture.release();
 	}
+	m_ObjectDetector = nullptr;
 }
 
 void VideoLayer::OnAttach()
@@ -55,22 +62,20 @@ void VideoLayer::OnUpdate(CatolYeah::Timestep ts)
 	else if (CatolYeah::Input::IsKeyPressed(CY_KEY_K))
 		m_squarePosition.y -= 5.0f * ts;
 
-	static float frameTime = 0;
+	static float frameTime = 0.0f;
+	frameTime += ts.GetMilliseconds();
 	if (frameTime > 1000.0f/m_frameRate)
 	{
 		cv::Mat img;
 		if (m_videoCapture.read(img) && !img.empty())
 		{
-			m_videoCapture.read(img);
+			//m_videoCapture.read(img);
 			cv::flip(img, img, 0);
 			cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+			m_ObjectDetector->Detect(img);
 			m_currentFrame->SetData(img.data, img.cols * img.rows * img.channels());
 		}
-		frameTime = 0;
-	}
-	else
-	{
-		frameTime += ts.GetMilliseconds();
+		frameTime = 0.0f;
 	}
 
 	// Render commands

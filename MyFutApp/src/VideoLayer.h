@@ -4,6 +4,7 @@
 
 #include "CatolYeah.h"
 #include "opencv2/opencv.hpp"
+#include "ObjectDetector.h"
 
 class VideoLayer : public CatolYeah::Layer
 {
@@ -20,6 +21,7 @@ private:
 	float m_frameRate;
 	CatolYeah::Ref<CatolYeah::Texture2D> m_currentFrame;
 	cv::VideoCapture m_videoCapture;
+	CatolYeah::Ref<ObjectDetector> m_ObjectDetector;
 
 	glm::vec3 m_squarePosition = { 0.0f, 0.0f, 0.0f };
 
