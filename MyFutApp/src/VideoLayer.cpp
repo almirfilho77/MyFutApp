@@ -70,8 +70,8 @@ void VideoLayer::OnUpdate(CatolYeah::Timestep ts)
 		if (m_videoCapture.read(img) && !img.empty())
 		{
 			//m_videoCapture.read(img);
-			cv::flip(img, img, 0);
 			cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+			cv::flip(img, img, 0);
 			m_ObjectDetector->Detect(img);
 			m_currentFrame->SetData(img.data, img.cols * img.rows * img.channels());
 		}

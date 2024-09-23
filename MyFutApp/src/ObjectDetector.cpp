@@ -71,12 +71,13 @@ void ObjectDetector::Detect(cv::Mat img)
         cv::rectangle(
             img,
             cv::Point(re.box.x, re.box.y - 25),
-            cv::Point(re.box.x + label.length() * 15, re.box.y),
+            //cv::Point(re.box.x + label.length() * 15, re.box.y),
+            cv::Point(re.box.x, re.box.y),
             color,
             cv::FILLED
         );
 
-        cv::putText(
+        /*cv::putText(
             img,
             label,
             cv::Point(re.box.x, re.box.y - 5),
@@ -84,7 +85,7 @@ void ObjectDetector::Detect(cv::Mat img)
             0.75,
             cv::Scalar(0, 0, 0),
             2
-        );
+        );*/
 
 
     }

@@ -60,7 +60,8 @@ public:
 
 		fs::path pitchTexturePath = fs::current_path() / "assets" / "textures" / "football_pitch_2D_base2.png";
 		//fs::path texturePath = fs::current_path() / "assets" / "textures" / "football_1.png";
-		fs::path videoPath = fs::current_path() / "assets" / "football-videos" / "video.mp4";
+		//fs::path videoPath = fs::current_path() / "assets" / "football-videos" / "video.mp4";
+		fs::path videoPath = fs::current_path() / "assets" / "football-videos" / "A1606b0e6_0 (9).mp4";
 		CY_DEBUG("Video path = {0}", videoPath.string());
 		PushLayer(new VideoLayer(videoPath.string()));
 
