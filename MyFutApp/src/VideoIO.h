@@ -6,6 +6,10 @@
 
 namespace VideoIO {
 
+	enum class VideoCodec {
+		MP4 = 1,
+	};
+
 	typedef struct _Frame {
 		void* Image;
 		int GPUSlot;
@@ -14,6 +18,7 @@ namespace VideoIO {
 
 	class IVideoSource
 	{
+	public:
 		/*
 		* @brief Loads video file and enables client to call Get methods.
 		* @param [in] filepath: Video file path.
@@ -58,6 +63,34 @@ namespace VideoIO {
 		* @return [int] Total number of frames in the video.
 		*/
 		virtual int GetNumberOfFrames() const = 0;
+	};
+
+	class IVideoSink
+	{
+	public:
+		/*
+		* @brief Create and open a new video file with the specified configurations. Enables writing frames to the file.
+		* @param [in] filepath: Video file path.
+		* @param [in] fps: Frame rate.
+		* @param [in] width: Frame width.
+		* @param [in] height: Frame height.
+		* @param [in] codec: Video codec.
+		* @return [bool] true if the video file was create successfully, false otherwise.
+		*/
+		virtual bool CreateVideo(const std::string &file_path, int fps, int width, int height, VideoCodec codec) = 0;
+
+		/*
+		* @brief Write a frame to the opened video file.
+		* @param [in] frame: Pointer to a video frame.
+		* @return [bool] true if the video frame was successfully written to the file, false otherwise.
+		*/
+		virtual bool WriteFrame(Frame *frame) = 0;
+
+		/*
+		* @brief Save and close the video file.
+		* @return [bool] true if the video file was closed successfully, false otherwise.
+		*/
+		virtual bool CloseVideo() = 0;
 	};
 
 }//VideoIO
